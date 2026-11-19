@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>हरिओम इलेक्ट्रीशियन - बिल जनरेटर</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --red:#d71920; --navy:#1f2a7c; --purple:#6a1b6e;
+    --bg:#f3f4f8; --card:#fff; --text:#1c1f2a; --muted:#6b7280; --line:#e3e5ec;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'Noto Sans Devanagari','Inter',system-ui,sans-serif;font-size:16px}
+  .topbar{background:var(--navy);color:#fff;padding:14px 16px;text-align:center}
+  .topbar h1{margin:0;font-size:19px;font-weight:700}
+  .topbar p{margin:2px 0 0;font-size:12px;opacity:.85}
+  .wrap{max-width:720px;margin:0 auto;padding:14px 14px 40px}
+  .card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(20,25,60,.08)}
+  .card h2{margin:0 0 12px;font-size:16px;color:var(--navy);font-weight:700}
+  label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:4px}
+  input[type=text],input[type=number],input[type=tel],input[type=date]{
+    width:100%;padding:12px;border:1.5px solid var(--line);border-radius:10px;font:inherit;background:#fff;color:var(--text);
+  }
+  input:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(31,42,124,.12)}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .field{margin-bottom:12px}
+  .item{border:1.5px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#fafbff;position:relative}
+  .item .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+  .item .amt{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-weight:700;color:var(--navy)}
+  .item .num{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:6px}
+  .del{position:absolute;top:8px;right:8px;border:0;background:#fee2e2;color:#b91c1c;width:32px;height:32px;border-radius:8px;font-size:18px;cursor:pointer}
+  .btn{border:0;border-radius:12px;padding:14px 16px;font:inherit;font-weight:700;cursor:pointer;width:100%}
+  .btn-add{background:#eef0ff;color:var(--navy);border:1.5px dashed var(--navy)}
+  .btn-primary{background:var(--red);color:#fff}
+  .btn-secondary{background:var(--navy);color:#fff}
+  .btn-ghost{background:#fff;color:var(--muted);border:1.5px solid var(--line)}
+  .btn:active{transform:scale(.98)}
+  .btn:disabled{opacity:.6}
+  .totalbar{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:var(--navy);color:#fff;border-radius:12px;margin-top:12px;font-weight:700}
+  .totalbar span:last-child{font-size:22px}
+  .actions{display:grid;gap:10px;margin-top:4px}
+  .previewbox{overflow:hidden;border-radius:10px;border:1px solid var(--line);background:#fff}
+  #previewInner{transform-origin:top left}
+
+  /* ---------- बिल (fixed width: PDF हमेशा एक जैसा) ---------- */
+  .bill{width:794px;background:#fff;color:#111;font-family:'Noto Sans Devanagari','Inter',sans-serif;font-size:14px;position:relative}
+  .bill .hd{padding:22px 32px 0;text-align:center}
+  .bill .hd .top{display:flex;justify-content:space-between;font-size:14px;font-weight:600;color:#333}
+  .bill .hd .gods{font-size:13px;color:#555;line-height:1.6}
+  .bill .hd h1{margin:6px 0 4px;font-size:40px;font-weight:800;color:var(--red);letter-spacing:1px;font-family:'Inter',sans-serif;text-shadow:1.5px 1.5px 0 #1f2a7c33}
+  .bill .svc{background:var(--purple);color:#fff;font-size:14px;padding:8px 20px;text-align:center;margin-top:10px;font-weight:600}
+  .bill .svc2{font-size:14px;text-align:center;padding:8px 20px;color:#222;font-weight:600}
+  .bill .addr{background:var(--navy);color:#fff;text-align:center;padding:9px 20px;font-weight:700;font-size:15px}
+  .bill .meta{display:flex;justify-content:space-between;padding:18px 32px 6px;gap:20px}
+  .bill .meta .l{flex:1}
+  .bill .meta .r{text-align:right}
+  .bill .meta small{display:block;color:#777;font-size:12px;font-weight:600}
+  .bill .meta b{font-size:16px}
+  .bill .title{margin:10px 32px 8px;font-size:13px;letter-spacing:1px;font-weight:700;color:var(--navy);border-bottom:2px solid var(--navy);padding-bottom:4px}
+  .bill table{width:calc(100% - 64px);margin:0 32px;border-collapse:collapse}
+  .bill th{background:#eef0ff;color:var(--navy);font-size:13px;padding:9px 8px;text-align:left}
+  .bill td{padding:9px 8px;border-bottom:1px solid #e5e7ee;vertical-align:top}
+  .bill .c{text-align:center}.bill .rt{text-align:right}
+  .bill .tot{margin:14px 32px 0;display:flex;justify-content:flex-end}
+  .bill .tot div{min-width:270px;background:var(--navy);color:#fff;padding:12px 16px;border-radius:8px;display:flex;justify-content:space-between;font-weight:700;font-size:17px}
+  .bill .words{margin:12px 32px 0;font-size:14px;color:#333}
+  .bill .foot{margin:40px 32px 0;display:flex;justify-content:space-between;align-items:flex-end}
+  .bill .foot .thanks{font-size:14px;color:#555;line-height:1.6}
+  .bill .foot .sign{text-align:center;font-size:13px;color:#444;min-width:200px;border-top:1.5px solid #444;padding-top:6px}
+  .bill .bottom{margin-top:28px;background:var(--red);color:#fff;text-align:center;padding:8px;font-size:13px;font-weight:600}
+  #capture{position:fixed;left:-10000px;top:0}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>हरिओम इलेक्ट्रीशियन</h1>
+  <p>बिल जनरेटर</p>
+</div>
+
+<div class="wrap">
+
+  <div class="card">
+    <h2>ग्राहक की जानकारी</h2>
+    <div class="field">
+      <label for="cname">ग्राहक का नाम *</label>
+      <input type="text" id="cname" placeholder="ग्राहक का नाम लिखें" autocomplete="off">
+    </div>
+    <div class="row2">
+      <div class="field" style="margin:0">
+        <label for="cphone">मोबाइल (ज़रूरी नहीं)</label>
+        <input type="tel" id="cphone" placeholder="मोबाइल नंबर" inputmode="numeric" maxlength="15">
+      </div>
+      <div class="field" style="margin:0">
+        <label for="bdate">तारीख</label>
+        <input type="date" id="bdate">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>सामान / सर्विस</h2>
+    <div id="items"></div>
+    <button class="btn btn-add" id="addBtn" type="button">+ नया आइटम जोड़ें</button>
+    <div class="totalbar"><span>कुल योग</span><span id="grand">₹0</span></div>
+  </div>
+
+  <div class="card">
+    <h2>बिल का प्रीव्यू</h2>
+    <div class="previewbox" id="pvBox"><div id="previewInner"></div></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-primary" id="pdfBtn" type="button">⬇ बिल डाउनलोड करें (PDF)</button>
+    <button class="btn btn-secondary" id="imgBtn" type="button">🖼 फोटो (Image) के रूप में डाउनलोड</button>
+    <button class="btn btn-ghost" id="newBtn" type="button">नया बिल</button>
+  </div>
+</div>
+
+<div id="capture"></div>
+
+<script>
+(function(){
+  var SHOP = {
+    owner: 'प्रो. हरिओम शर्मा',
+    name: 'HARIOM ELECTRICIAN',
+    phone: '9369317011',
+    addr: 'पता- आदिल नगर, कल्याणपुर, लखनऊ',
+    svc: 'गीजर, वाशिंग मशीन, आरो एवं सोलर पैनल की सर्विसिंग की जाती है।',
+    svc2: 'होम रिपेयरिंग सर्विस उपलब्ध है।'
+  };
+
+  var items = [];
+  var $ = function(id){ return document.getElementById(id); };
+
+  function todayISO(){
+    var d = new Date();
+    var m = ('0'+(d.getMonth()+1)).slice(-2), day = ('0'+d.getDate()).slice(-2);
+    return d.getFullYear()+'-'+m+'-'+day;
+  }
+  function fmtDate(iso){
+    if(!iso) return '';
+    var p = iso.split('-');
+    return p[2]+'/'+p[1]+'/'+p[0];
+  }
+  function esc(s){
+    return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});
+  }
+  function money(n){
+    return Number(n).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:2});
+  }
+
+  /* ---- बिल नंबर (इसी फोन/ब्राउज़र में याद रहता है) ---- */
+  function nextBillNo(peek){
+    var n = 1;
+    try{ n = parseInt(localStorage.getItem('hariom_bill_no')||'0',10)+1; }catch(e){}
+    if(!peek){ try{ localStorage.setItem('hariom_bill_no', String(n)); }catch(e){} }
+    return n;
+  }
+  var billNo = nextBillNo(true);
+  function billNoText(){ return 'HE-'+('0000'+billNo).slice(-4); }
+
+  /* ---- रकम शब्दों में (हिंदी) ---- */
+  var H=['शून्य','एक','दो','तीन','चार','पाँच','छह','सात','आठ','नौ','दस','ग्यारह','बारह','तेरह','चौदह','पंद्रह','सोलह','सत्रह','अठारह','उन्नीस',
+  'बीस','इक्कीस','बाईस','तेईस','चौबीस','पच्चीस','छब्बीस','सत्ताईस','अट्ठाईस','उनतीस',
+  'तीस','इकतीस','बत्तीस','तैंतीस','चौंतीस','पैंतीस','छत्तीस','सैंतीस','अड़तीस','उनतालीस',
+  'चालीस','इकतालीस','बयालीस','तैंतालीस','चौवालीस','पैंतालीस','छियालीस','सैंतालीस','अड़तालीस','उनचास',
+  'पचास','इक्यावन','बावन','तिरपन','चौवन','पचपन','छप्पन','सत्तावन','अट्ठावन','उनसठ',
+  'साठ','इकसठ','बासठ','तिरसठ','चौंसठ','पैंसठ','छियासठ','सड़सठ','अड़सठ','उनहत्तर',
+  'सत्तर','इकहत्तर','बहत्तर','तिहत्तर','चौहत्तर','पचहत्तर','छिहत्तर','सतहत्तर','अठहत्तर','उन्यासी',
+  'अस्सी','इक्यासी','बयासी','तिरासी','चौरासी','पचासी','छियासी','सत्तासी','अट्ठासी','नवासी',
+  'नब्बे','इक्यानवे','बानवे','तिरानवे','चौरानवे','पंचानवे','छियानवे','सत्तानवे','अट्ठानवे','निन्यानवे'];
+  function three(n){
+    var s='';
+    if(n>=100){ s+=H[Math.floor(n/100)]+' सौ'; n%=100; if(n) s+=' '; }
+    if(n) s+=H[n];
+    return s;
+  }
+  function words(n){
+    n = Math.floor(n);
+    if(n===0) return 'शून्य';
+    var out=[], cr=Math.floor(n/10000000); n%=10000000;
+    var lk=Math.floor(n/100000); n%=100000;
+    var th=Math.floor(n/1000); n%=1000;
+    if(cr) out.push(three(cr)+' करोड़');
+    if(lk) out.push(H[lk]+' लाख');
+    if(th) out.push(H[th]+' हज़ार');
+    if(n) out.push(three(n));
+    return out.join(' ');
+  }
+  function totalInWords(t){
+    var rupees=Math.floor(t), paise=Math.round((t-rupees)*100);
+    var s=words(rupees)+' रुपये';
+    if(paise) s+=' और '+H[paise]+' पैसे';
+    return s+' मात्र';
+  }
+
+  /* ---- आइटम ---- */
+  function lineTotal(it){ return (parseFloat(it.qty)||0)*(parseFloat(it.price)||0); }
+  function grandTotal(){ return items.reduce(function(s,it){return s+lineTotal(it);},0); }
+
+  function addItem(focus){
+    items.push({name:'',qty:'1',price:''});
+    renderItems();
+    if(focus){
+      var inputs=document.querySelectorAll('.i-name');
+      if(inputs.length) inputs[inputs.length-1].focus();
+    }
+  }
+
+  function renderItems(){
+    var box=$('items'); box.innerHTML='';
+    items.forEach(function(it,i){
+      var d=document.createElement('div'); d.className='item';
+      d.innerHTML =
+        '<div class="num">आइटम '+(i+1)+'</div>'+
+        (items.length>1?'<button class="del" type="button" aria-label="हटाएँ">×</button>':'')+
+        '<input type="text" class="i-name" placeholder="सामान / सर्विस का नाम" value="'+esc(it.name)+'">'+
+        '<div class="grid">'+
+          '<div><label>मात्रा</label><input type="number" class="i-qty" inputmode="decimal" min="0" step="any" value="'+esc(it.qty)+'"></div>'+
+          '<div><label>दर / कीमत (₹)</label><input type="number" class="i-price" inputmode="decimal" min="0" step="any" placeholder="0" value="'+esc(it.price)+'"></div>'+
+        '</div>'+
+        '<div class="amt"><span>रकम</span><span class="i-amt">₹'+money(lineTotal(it))+'</span></div>';
+      var upd=function(){
+        it.name=d.querySelector('.i-name').value;
+        it.qty=d.querySelector('.i-qty').value;
+        it.price=d.querySelector('.i-price').value;
+        d.querySelector('.i-amt').textContent='₹'+money(lineTotal(it));
+        refresh();
+      };
+      d.querySelectorAll('input').forEach(function(inp){ inp.addEventListener('input',upd); });
+      var del=d.querySelector('.del');
+      if(del) del.addEventListener('click',function(){ items.splice(i,1); renderItems(); refresh(); });
+      box.appendChild(d);
+    });
+    refresh();
+  }
+
+  /* ---- बिल HTML ---- */
+  function billHTML(){
+    var rows='', n=0;
+    items.forEach(function(it){
+      var amt=lineTotal(it);
+      if(!it.name.trim() && !amt) return;
+      n++;
+      rows+='<tr><td class="c">'+n+'</td><td>'+esc(it.name||'-')+'</td><td class="c">'+esc(it.qty||0)+'</td><td class="rt">₹'+money(parseFloat(it.price)||0)+'</td><td class="rt">₹'+money(amt)+'</td></tr>';
+    });
+    if(!rows) rows='<tr><td colspan="5" class="c" style="color:#999;padding:22px">कोई आइटम नहीं जोड़ा गया</td></tr>';
+    var total=grandTotal();
+    var name=$('cname').value.trim()||'—';
+    var phone=$('cphone').value.trim();
+    return ''+
+    '<div class="bill">'+
+      '<div class="hd">'+
+        '<div class="top"><span>'+SHOP.owner+'</span><span>📞 '+SHOP.phone+'</span></div>'+
+        '<div class="gods">।। श्री गणेशाय नमः ।।<br>।। नमः शिवाय ।।</div>'+
+        '<h1>'+SHOP.name+'</h1>'+
+      '</div>'+
+      '<div class="svc">'+SHOP.svc+'</div>'+
+      '<div class="svc2">'+SHOP.svc2+'</div>'+
+      '<div class="addr">'+SHOP.addr+'</div>'+
+      '<div class="meta">'+
+        '<div class="l"><small>ग्राहक</small><b>'+esc(name)+'</b>'+(phone?'<div style="color:#555;font-size:13px;margin-top:2px">📞 '+esc(phone)+'</div>':'')+'</div>'+
+        '<div class="r"><small>बिल नं.</small><b>'+billNoText()+'</b><small style="margin-top:6px">तारीख</small><b>'+fmtDate($('bdate').value)+'</b></div>'+
+      '</div>'+
+      '<div class="title">बिल / इनवॉइस</div>'+
+      '<table><thead><tr><th class="c" style="width:44px">क्र.</th><th>विवरण</th><th class="c" style="width:64px">मात्रा</th><th class="rt" style="width:100px">दर</th><th class="rt" style="width:110px">रकम</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+      '<div class="tot"><div><span>कुल योग</span><span>₹'+money(total)+'</span></div></div>'+
+      '<div class="words"><b>शब्दों में:</b> '+totalInWords(total)+'</div>'+
+      '<div class="foot"><div class="thanks">आपके सहयोग के लिए धन्यवाद!<br>फिर पधारें।</div><div class="sign">हस्ताक्षर</div></div>'+
+      '<div class="bottom">हरिओम इलेक्ट्रीशियन • '+SHOP.phone+' • आदिल नगर, कल्याणपुर, लखनऊ</div>'+
+    '</div>';
+  }
+
+  function fitPreview(){
+    var box=$('pvBox'), inner=$('previewInner');
+    var scale=Math.min(1, box.clientWidth/794);
+    inner.style.transform='scale('+scale+')';
+    var h=inner.firstChild ? inner.firstChild.offsetHeight : 0;
+    box.style.height=(h*scale)+'px';
+  }
+
+  function refresh(){
+    $('grand').textContent='₹'+money(grandTotal());
+    $('previewInner').innerHTML=billHTML();
+    fitPreview();
+  }
+
+  /* ---- डाउनलोड ---- */
+  function validate(){
+    if(!$('cname').value.trim()){
+      alert('कृपया ग्राहक का नाम लिखें।');
+      $('cname').focus();
+      return false;
+    }
+    if(grandTotal()<=0){
+      alert('कृपया कम से कम एक आइटम कीमत के साथ जोड़ें।');
+      return false;
+    }
+    return true;
+  }
+
+  function render(cb){
+    if(typeof html2canvas==='undefined'){
+      alert('डाउनलोड लाइब्रेरी लोड नहीं हुई। कृपया इंटरनेट चालू करके पेज दोबारा खोलें।');
+      return;
+    }
+    var cap=$('capture');
+    cap.innerHTML=billHTML();
+    var node=cap.firstChild;
+    var go=function(){
+      html2canvas(node,{scale:2,backgroundColor:'#ffffff',useCORS:true}).then(cb).catch(function(){
+        alert('बिल नहीं बन पाया। कृपया दोबारा कोशिश करें।');
+        lockBtns(false);
+      });
+    };
+    if(document.fonts && document.fonts.ready) document.fonts.ready.then(go); else go();
+  }
+
+  function fileBase(){
+    var nm=$('cname').value.trim().replace(/[^a-z0-9\u0900-\u097F]+/gi,'_').replace(/^_|_$/g,'')||'Customer';
+    return 'Bill_'+billNoText()+'_'+nm;
+  }
+
+  function lockBtns(lock,btn,txt){
+    ['pdfBtn','imgBtn'].forEach(function(id){ $(id).disabled=lock; });
+    if(btn){ btn.dataset.t=btn.dataset.t||btn.textContent; btn.textContent=lock?txt:btn.dataset.t; }
+  }
+
+  $('pdfBtn').addEventListener('click',function(){
+    if(!validate()) return;
+    var btn=this; lockBtns(true,btn,'तैयार हो रहा है…');
+    render(function(canvas){
+      try{
+        var jsPDF=window.jspdf.jsPDF;
+        var pdf=new jsPDF('p','mm','a4');
+        var pw=210, ph=297;
+        var imgH=canvas.height*pw/canvas.width;
+        var data=canvas.toDataURL('image/jpeg',0.95);
+        if(imgH<=ph){
+          pdf.addImage(data,'JPEG',0,0,pw,imgH);
+        }else{
+          var y=0, left=imgH;
+          pdf.addImage(data,'JPEG',0,y,pw,imgH);
+          left-=ph;
+          while(left>0){
+            y-=ph; pdf.addPage();
+            pdf.addImage(data,'JPEG',0,y,pw,imgH);
+            left-=ph;
+          }
+        }
+        pdf.save(fileBase()+'.pdf');
+        nextBillNo(false); afterSave();
+      }catch(e){ alert('PDF नहीं बन पाया। "फोटो के रूप में डाउनलोड" आज़माएँ।'); }
+      lockBtns(false,btn);
+    });
+  });
+
+  $('imgBtn').addEventListener('click',function(){
+    if(!validate()) return;
+    var btn=this; lockBtns(true,btn,'तैयार हो रहा है…');
+    render(function(canvas){
+      var a=document.createElement('a');
+      a.href=canvas.toDataURL('image/png');
+      a.download=fileBase()+'.png';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      nextBillNo(false); afterSave();
+      lockBtns(false,btn);
+    });
+  });
+
+  function afterSave(){ billNo=nextBillNo(true); refresh(); }
+
+  function resetAll(){
+    $('cname').value=''; $('cphone').value=''; $('bdate').value=todayISO();
+    items=[]; billNo=nextBillNo(true); addItem(false);
+  }
+  $('newBtn').addEventListener('click',function(){
+    if(confirm('नया बिल शुरू करें? अभी की सारी जानकारी हट जाएगी।')) resetAll();
+  });
+
+  $('addBtn').addEventListener('click',function(){ addItem(true); });
+  ['cname','cphone','bdate'].forEach(function(id){ $(id).addEventListener('input',refresh); });
+  window.addEventListener('resize',fitPreview);
+
+  $('bdate').value=todayISO();
+  addItem(false);
+})();
+</script>
+</body>
+</html>
