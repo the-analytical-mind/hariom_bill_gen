@@ -38,6 +38,8 @@
   .btn-primary{background:var(--red);color:#fff}
   .btn-secondary{background:var(--navy);color:#fff}
   .btn-ghost{background:#fff;color:var(--muted);border:1.5px solid var(--line)}
+  .btn-share{background:#25a244;color:#fff}
+  .btnrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .btn:active{transform:scale(.98)}
   .btn:disabled{opacity:.6}
   .totalbar{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:var(--navy);color:#fff;border-radius:12px;margin-top:12px;font-weight:700}
@@ -115,7 +117,10 @@
   </div>
 
   <div class="actions">
-    <button class="btn btn-primary" id="pdfBtn" type="button">⬇ बिल डाउनलोड करें (PDF)</button>
+    <div class="btnrow">
+      <button class="btn btn-primary" id="pdfBtn" type="button">⬇ डाउनलोड (PDF)</button>
+      <button class="btn btn-share" id="shareBtn" type="button">↗ शेयर करें</button>
+    </div>
     <button class="btn btn-secondary" id="imgBtn" type="button">🖼 फोटो (Image) के रूप में डाउनलोड</button>
     <button class="btn btn-ghost" id="newBtn" type="button">नया बिल</button>
   </div>
@@ -325,7 +330,7 @@
   }
 
   function lockBtns(lock,btn,txt){
-    ['pdfBtn','imgBtn'].forEach(function(id){ $(id).disabled=lock; });
+    ['pdfBtn','imgBtn','shareBtn'].forEach(function(id){ $(id).disabled=lock; });
     if(btn){ btn.dataset.t=btn.dataset.t||btn.textContent; btn.textContent=lock?txt:btn.dataset.t; }
   }
 
@@ -368,6 +373,31 @@
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       nextBillNo(false); afterSave();
       lockBtns(false,btn);
+    });
+  });
+
+  $('shareBtn').addEventListener('click',function(){
+    if(!validate()) return;
+    var btn=this; lockBtns(true,btn,'तैयार हो रहा है…');
+    render(function(canvas){
+      canvas.toBlob(function(blob){
+        if(!blob){ alert('बिल नहीं बन पाया। कृपया दोबारा कोशिश करें।'); lockBtns(false,btn); return; }
+        var file=new File([blob],fileBase()+'.png',{type:'image/png'});
+        var data={files:[file],title:'हरिओम इलेक्ट्रीशियन - बिल',text:'हरिओम इलेक्ट्रीशियन - बिल '+billNoText()};
+        if(navigator.canShare && navigator.canShare({files:[file]}) && navigator.share){
+          navigator.share(data).then(function(){
+            nextBillNo(false); afterSave();
+          }).catch(function(){ /* यूज़र ने शेयर रद्द किया */ }).then(function(){ lockBtns(false,btn); });
+        }else{
+          var a=document.createElement('a');
+          a.href=URL.createObjectURL(blob);
+          a.download=fileBase()+'.png';
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          nextBillNo(false); afterSave();
+          alert('इस ब्राउज़र में सीधा शेयर उपलब्ध नहीं है। बिल की फोटो डाउनलोड हो गई है — उसे WhatsApp / Instagram में भेज दें।');
+          lockBtns(false,btn);
+        }
+      },'image/png');
     });
   });
 
